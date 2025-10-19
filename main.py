@@ -28,22 +28,22 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- API Key Configuration ---
-# Try to get API key from user input, secrets, or env var
-def get_gemini_api_key():
-    # User input (highest priority)
-    user_key = st.sidebar.text_input(
-        "Gemini API Key (optional; uses host's if blank)",
+# --- Sidebar for Configuration ---
+with st.sidebar:
+    st.header("Configuration")
+    user_key = st.text_input(
+        "Gemini API Key if the host's is down or limited.",
         type="password",
         help="Enter your own key if the host's is down or limited."
     )
-    if user_key:
-        return user_key
-    
-    # Fallback to secrets (Streamlit) or env var
-    return st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    selected_model = st.selectbox(
+        "Choose AI Model",
+        options=["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
+    )
 
-api_key = get_gemini_api_key()
+# --- API Key Configuration ---
+# Fallback to secrets (Streamlit) or env var if no user key
+api_key = user_key if user_key else st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
 if not api_key:
     st.error("No Gemini API key found. Please provide one in the sidebar or set GEMINI_API_KEY in secrets/env.")
     st.stop()
@@ -53,14 +53,6 @@ genai.configure(api_key=api_key)
 
 # App title
 st.title("Legal_ease: AI-Powered Legal Document Assistant")
-
-# --- Sidebar for Model Selection ---
-with st.sidebar:
-    st.header("Configuration")
-    selected_model = st.selectbox(
-        "Choose AI Model",
-        options=["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
-    )
 
 # --- Session State Initialization ---
 # Initialize session state for document text and chat history if they don't exist.
@@ -97,7 +89,7 @@ def generate_chat_response(full_messages, model, max_tokens=1024, temperature=0.
     try:
         if model.startswith("gemini"):
             # **UPDATED GEMINI API USAGE**
-            # Extract system prompt and format message history for Gemini
+            # Extract system prompt and format format message history for Gemini
             system_prompt = ""
             gemini_history = []
             
