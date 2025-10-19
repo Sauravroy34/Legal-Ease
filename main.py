@@ -158,10 +158,11 @@ with left_col:
         # Process and display based on file type
         if uploaded_file.type == "application/pdf":
             try:
-                # Display PDF preview
+                # Display PDF preview using st.pdf
+                st.pdf(uploaded_file, height=600)
+                
+                # Base64 for Gemini multimodal input
                 base64_pdf = base64.b64encode(file_bytes).decode('utf-8')
-                pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="600" type="application/pdf"></iframe>'
-                st.markdown(pdf_display, unsafe_allow_html=True)
                 
                 # Extract text (for chat context)
                 reader = PdfReader(io.BytesIO(file_bytes))
@@ -184,7 +185,7 @@ with left_col:
         
         # Display a truncated preview of the extracted text (for PDFs only)
         if st.session_state.doc_text != "Image document uploaded":
-            with st.expander("View Extracted Text"):
+            with st.expander("View Extracted Text (first 2000 tokens)"):
                 st.text_area("", st.session_state.doc_text[:2000], height=200, disabled=True)
         
         # Button to generate the summary
