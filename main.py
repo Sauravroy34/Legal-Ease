@@ -17,11 +17,15 @@ st.markdown(
     """
     <style>
     [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
-        width: 375px;
+        width: 400px;
     }
     [data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
-        width: 375px;
-        margin-left: -375px;
+        width: 400px;
+        margin-left: -400px;
+    }
+    .stSelectbox > div > div {
+        max-width: 100%;
+        overflow: hidden;
     }
     </style>
     """,
@@ -32,7 +36,7 @@ st.markdown(
 with st.sidebar:
     st.header("Configuration")
     user_key = st.text_input(
-        "Gemini API Key if the host's is down or limited.",
+        "Gemini API Key (optional)",
         type="password",
         help="Enter your own key if the host's is down or limited."
     )
@@ -89,7 +93,7 @@ def generate_chat_response(full_messages, model, max_tokens=1024, temperature=0.
     try:
         if model.startswith("gemini"):
             # **UPDATED GEMINI API USAGE**
-            # Extract system prompt and format format message history for Gemini
+            # Extract system prompt and format message history for Gemini
             system_prompt = ""
             gemini_history = []
             
