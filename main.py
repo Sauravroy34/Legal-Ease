@@ -37,12 +37,11 @@ with st.sidebar:
     st.header("Configuration")
     user_key = st.text_input(
         "Gemini API Key (optional)",
-        type="password",
         help="Enter your own key if the host's is down or limited."
     )
     selected_model = st.selectbox(
         "Choose AI Model",
-        options=["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
+        options=["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash","gemini-2.5-flash-lite"]
     )
 
 # --- API Key Configuration ---
@@ -88,7 +87,7 @@ def generate_completion(prompt_content, model, max_tokens=8000, temperature=0.3)
         st.error(f"Error during generation: {e}")
         return None
 
-def generate_chat_response(full_messages, model, max_tokens=1024, temperature=0.5):
+def generate_chat_response(full_messages, model, max_tokens=8000, temperature=0.5):
     """Generate a chat response using the selected model."""
     try:
         if model.startswith("gemini"):
@@ -244,8 +243,8 @@ with right_col:
                 with st.spinner("Thinking..."):
                     system_prompt = (
                         "You are a helpful legal AI assistant. The first message you received was a summary of a legal document. "
-                        "Answer the user's follow-up questions based *only* on the information in that summary and the ongoing conversation. "
-                        "If the answer isn't in the provided context, clearly state that."
+                        "Answer the user's follow-up questions"
+                        
                     )
                     
                     # Prepend system prompt for the API call
