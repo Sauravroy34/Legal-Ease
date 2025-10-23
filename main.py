@@ -37,6 +37,7 @@ with st.sidebar:
     st.header("Configuration")
     user_key = st.text_input(
         "Gemini API Key (optional)",
+        type="password",
         help="Enter your own key if the host's is down or limited."
     )
     selected_model = st.selectbox(
@@ -55,7 +56,7 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # App title
-st.title("Legal_ease: AI-Powered Legal Document Assistant")
+st.title("Legal Ease: AI-Powered Legal Document Assistant")
 
 # --- Session State Initialization ---
 # Initialize session state for document text and chat history if they don't exist.
@@ -69,58 +70,50 @@ if "messages" not in st.session_state:
 
 def generate_completion(prompt_content, model, max_tokens=8000, temperature=0.3):
     """Generate a completion using the selected model."""
-    try:
-        if model.startswith("gemini"):
-            # **UPDATED GEMINI API USAGE**
-            gen_config = GenerationConfig(max_output_tokens=max_tokens, temperature=temperature)
-            gemini_model = genai.GenerativeModel(
-                model_name=model,
-                generation_config=gen_config
-            )
-            response = gemini_model.generate_content(
-                contents=prompt_content
-            )
-            return response.text
-        else:
-            raise ValueError(f"Unsupported model: {model}")
-    except Exception as e:
-        st.error(f"Error during generation: {e}")
-        return None
+    if model.startswith("gemini"):
+        # **UPDATED GEMINI API USAGE**
+        gen_config = GenerationConfig(max_output_tokens=max_tokens, temperature=temperature)
+        gemini_model = genai.GenerativeModel(
+            model_name=model,
+            generation_config=gen_config
+        )
+        response = gemini_model.generate_content(
+            contents=prompt_content
+        )
+        return response.text
+    else:
+        raise ValueError(f"Unsupported model: {model}")
 
 def generate_chat_response(full_messages, model, max_tokens=8000, temperature=0.5):
     """Generate a chat response using the selected model."""
-    try:
-        if model.startswith("gemini"):
-            # **UPDATED GEMINI API USAGE**
-            # Extract system prompt and format message history for Gemini
-            system_prompt = ""
-            gemini_history = []
-            
-            if full_messages and full_messages[0]['role'] == 'system':
-                system_prompt = full_messages[0]['content']
-                messages_for_history = full_messages[1:]
-            else:
-                messages_for_history = full_messages
-
-            for msg in messages_for_history:
-                # Map 'assistant' role to 'model' for the Gemini API
-                role = "model" if msg["role"] == "assistant" else "user"
-                gemini_history.append({'role': role, 'parts': [msg['content']]})
-
-            gen_config = GenerationConfig(max_output_tokens=max_tokens, temperature=temperature)
-            gemini_model = genai.GenerativeModel(
-                model_name=model,
-                system_instruction=system_prompt,
-                generation_config=gen_config
-            )
-            
-            response = gemini_model.generate_content(gemini_history)
-            return response.text
+    if model.startswith("gemini"):
+        # **UPDATED GEMINI API USAGE**
+        # Extract system prompt and format message history for Gemini
+        system_prompt = ""
+        gemini_history = []
+        
+        if full_messages and full_messages[0]['role'] == 'system':
+            system_prompt = full_messages[0]['content']
+            messages_for_history = full_messages[1:]
         else:
-            raise ValueError(f"Unsupported model: {model}")
-    except Exception as e:
-        st.error(f"Error during chat generation: {e}")
-        return None
+            messages_for_history = full_messages
+
+        for msg in messages_for_history:
+            # Map 'assistant' role to 'model' for the Gemini API
+            role = "model" if msg["role"] == "assistant" else "user"
+            gemini_history.append({'role': role, 'parts': [msg['content']]})
+
+        gen_config = GenerationConfig(max_output_tokens=max_tokens, temperature=temperature)
+        gemini_model = genai.GenerativeModel(
+            model_name=model,
+            system_instruction=system_prompt,
+            generation_config=gen_config
+        )
+        
+        response = gemini_model.generate_content(gemini_history)
+        return response.text
+    else:
+        raise ValueError(f"Unsupported model: {model}")
 
 def auto_scroll():
     """Auto-scroll to the bottom of the chat."""
@@ -156,31 +149,25 @@ with left_col:
         
         # Process and display based on file type
         if uploaded_file.type == "application/pdf":
-            try:
-                # Display PDF preview using st.pdf
-                st.pdf(uploaded_file, height=600)
-                
-                # Base64 for Gemini multimodal input
-                base64_pdf = base64.b64encode(file_bytes).decode('utf-8')
-                
-                # Extract text (for chat context)
-                reader = PdfReader(io.BytesIO(file_bytes))
-                text = "".join(page.extract_text() + "\n" for page in reader.pages)
-                st.session_state.doc_text = text.strip()
-                st.success("PDF text extracted successfully!")
-            except Exception as e:
-                st.error(f"Error extracting PDF: {e}")
+            # Display PDF preview using st.pdf
+            st.pdf(uploaded_file, height=600)
+            
+            # Base64 for Gemini multimodal input
+            base64_pdf = base64.b64encode(file_bytes).decode('utf-8')
+            
+            # Extract text (for chat context)
+            reader = PdfReader(io.BytesIO(file_bytes))
+            text = "".join(page.extract_text() + "\n" for page in reader.pages)
+            st.session_state.doc_text = text.strip()
+            st.success("PDF text extracted successfully!")
         else:  # Image file
-            try:
-                image = Image.open(io.BytesIO(file_bytes))
-                st.image(image, caption="Uploaded Image Preview", use_container_width=True)
-                
-                # Base64 for Gemini multimodal input
-                base64_image = base64.b64encode(file_bytes).decode('utf-8')
-                st.session_state.doc_text = "Image document uploaded"  # Placeholder for chat check
-                st.success("Image uploaded successfully!")
-            except Exception as e:
-                st.error(f"Error processing image: {e}")
+            image = Image.open(io.BytesIO(file_bytes))
+            st.image(image, caption="Uploaded Image Preview", use_container_width=True)
+            
+            # Base64 for Gemini multimodal input
+            base64_image = base64.b64encode(file_bytes).decode('utf-8')
+            st.session_state.doc_text = "Image document uploaded"  # Placeholder for chat check
+            st.success("Image uploaded successfully!")
         
         # Display a truncated preview of the extracted text (for PDFs only)
         if st.session_state.doc_text != "Image document uploaded":
